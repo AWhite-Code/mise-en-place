@@ -4,7 +4,15 @@
             "path": "."
         }
     ],
-    "settings": {},
+    "settings": {
+        "cSpell.ignorePaths": [
+            "node_modules",
+            "dist",
+            "build",
+            ".git",
+            "mise-en-place.code-workspace"
+        ]
+    },
     "extensions": {
         "recommendations": [
             "prisma.prisma",
