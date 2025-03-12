@@ -1,0 +1,38 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {},
+    "extensions": {
+        "recommendations": [
+            "prisma.prisma",
+            "dbaeumer.vscode-eslint",
+            "esbenp.prettier-vscode",
+            "mikestead.dotenv",
+            "coenraads.bracket-pair-colorizer-2",
+            "graphql.vscode-graphql",
+            "orta.vscode-jest",
+            "ms-azuretools.vscode-docker",
+            "ms-vscode-remote.remote-containers",
+            "ms-vscode.vscode-typescript-next",
+            "christian-kohler.npm-intellisense",
+            "christian-kohler.path-intellisense",
+            "dsznajder.es7-react-js-snippets",
+            "humao.rest-client",
+            "alexcvzz.vscode-sqlite",
+            "ryanluker.vscode-coverage-gutters",
+            "DavidAnson.vscode-markdownlint",
+            "yzhang.markdown-all-in-one",
+            "eamodio.gitlens",
+            "GitHub.vscode-github-actions",
+            "dsznajder.electron-vscode",
+            "usernamehw.errorlens",
+            "wix.vscode-import-cost",
+            "streetsidesoftware.code-spell-checker",
+            "formulahendry.auto-rename-tag",
+            "naumovs.color-highlight"
+        ]
+    }
+}
