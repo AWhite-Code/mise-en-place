@@ -1,0 +1,26 @@
+{
+  "name": "mise-en-place",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AWhite-Code/mise-en-place.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AWhite-Code/mise-en-place/issues"
+  },
+  "homepage": "https://github.com/AWhite-Code/mise-en-place#readme",
+  "description": "",
+  "devDependencies": {
+    "prisma": "^6.5.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0"
+  }
+}
