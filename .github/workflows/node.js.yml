@@ -47,9 +47,9 @@ jobs:
         # Simple test to verify database is accessible
         sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
         
-        # Optional: Run a simple test that uses Prisma client
-        cat > db-test.ts << 'EOF'
-        import { PrismaClient } from '@prisma/client';
+        # Create a temporary test file using CommonJS syntax
+        cat > db-test.js << 'EOF'
+        const { PrismaClient } = require('@prisma/client');
         
         const prisma = new PrismaClient();
         
@@ -85,5 +85,5 @@ jobs:
         testDb();
         EOF
         
-        # Compile and run the TypeScript file
-        npx ts-node db-test.ts
+        # Run the JavaScript file directly with Node
+        node db-test.js
