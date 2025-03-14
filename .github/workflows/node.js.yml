@@ -22,11 +22,11 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
-    - name: Set up SQLite
-      uses: actions/setup-sqlite@v1
-      with:
-        sqlite-version: 3.44.0
-        sqlite-year: 2023
+    - name: Install SQLite
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sqlite3
+        sqlite3 --version
         
     - name: Install dependencies
       run: npm ci
@@ -47,9 +47,10 @@ jobs:
         # Simple test to verify database is accessible
         sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
         
-        # Optional: Run a simple test script that uses Prisma client
-        node -e "
-        const { PrismaClient } = require('@prisma/client');
+        # Optional: Run a simple test that uses Prisma client
+        cat > db-test.ts << 'EOF'
+        import { PrismaClient } from '@prisma/client';
+        
         const prisma = new PrismaClient();
         
         async function testDb() {
@@ -82,4 +83,7 @@ jobs:
         }
         
         testDb();
-        "
+        EOF
+        
+        # Compile and run the TypeScript file
+        npx ts-node db-test.ts
