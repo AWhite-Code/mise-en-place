@@ -85,5 +85,5 @@ jobs:
         testDb();
         EOF
         
-        # Run the JavaScript file directly with Node
-        node db-test.js
+        # Run the JavaScript file with the DATABASE_URL environment variable explicitly set
+        DATABASE_URL=file:./test.db node db-test.js
