@@ -1,0 +1,89 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Database Test
+
+on:
+  push:
+    branches: [ main, 'develop*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install SQLite
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sqlite3
+        sqlite3 --version
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Create test database and run migrations
+      run: |
+        # Set test database path
+        echo "DATABASE_URL=file:./test.db" > .env.test
+        
+        # Generate Prisma client
+        npx prisma generate
+        
+        # Run migrations to create database and schema
+        DATABASE_URL=file:./test.db npx prisma migrate deploy
+        
+    - name: Verify database setup
+      run: |
+        # Simple test to verify database is accessible
+        sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
+        
+        # Create a temporary test file using CommonJS syntax
+        cat > db-test.js << 'EOF'
+        const { PrismaClient } = require('@prisma/client');
+        
+        const prisma = new PrismaClient();
+        
+        async function testDb() {
+          try {
+            // Insert test record
+            await prisma.recipe.create({
+              data: {
+                name: 'Test Recipe',
+                description: 'This is a test recipe'
+              }
+            });
+            
+            // Query to verify
+            const count = await prisma.recipe.count();
+            console.log('Recipe count:', count);
+            
+            if (count === 1) {
+              console.log('Database test successful');
+              process.exit(0);
+            } else {
+              console.error('Database test failed');
+              process.exit(1);
+            }
+          } catch (error) {
+            console.error('Database test error:', error);
+            process.exit(1);
+          } finally {
+            await prisma.$disconnect();
+          }
+        }
+        
+        testDb();
+        EOF
+        
+        # Run the JavaScript file with the DATABASE_URL environment variable explicitly set
+        DATABASE_URL=file:./test.db node db-test.js
