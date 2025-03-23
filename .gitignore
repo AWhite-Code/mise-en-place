@@ -35,3 +35,6 @@ out/
 
 # Operating system files
 Thumbs.db
+
+# Personal dev notes
+docs/personal*
