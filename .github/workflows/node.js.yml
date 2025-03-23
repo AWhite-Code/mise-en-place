@@ -51,12 +51,12 @@ jobs:
       run: |
           # Check number of recipes
           echo "Checking recipe count:"
-          sqlite3 test.db "SELECT COUNT(*) FROM Recipe;"
+          sqlite3 test.db "SELECT COUNT(*) FROM recipe;"
           
           # Check number of ingredients
           echo "Checking ingredient count:"
-          sqlite3 test.db "SELECT COUNT(*) FROM Ingredient;"
+          sqlite3 test.db "SELECT COUNT(*) FROM ingredient;"
           
           # Check for specific recipe
           echo "Checking for Beef and Sweetcorn Chili:"
-          sqlite3 test.db "SELECT name FROM Recipe WHERE name LIKE '%Chili%';"
+          sqlite3 test.db "SELECT name FROM recipe WHERE name LIKE '%Chili%';"
