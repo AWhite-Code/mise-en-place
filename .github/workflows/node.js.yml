@@ -53,16 +53,39 @@ jobs:
           echo "Tables in the database:"
           sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
         
-    - name: Verify database seeding
-      run: |
-          # Check number of recipes
-          echo "Checking recipe count:"
-          sqlite3 test.db "SELECT COUNT(*) FROM Recipe;"
-          
-          # Check number of ingredients
-          echo "Checking ingredient count:"
-          sqlite3 test.db "SELECT COUNT(*) FROM Ingredient;"
-          
-          # Check for specific recipe
-          echo "Checking for Beef and Sweetcorn Chili:"
-          sqlite3 test.db "SELECT name FROM Recipe WHERE name LIKE '%Chili%';"
+          - name: Verify database setup
+          run: |
+            # Print the current directory
+            echo "Current directory:"
+            pwd
+            
+            # List files to see if the database file exists
+            echo "Database files:"
+            ls -la *.db
+            
+            # Check if the database has any tables at all
+            echo "All tables in database:"
+            sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
+            
+            # Print environment variable
+            echo "DATABASE_URL=$DATABASE_URL"
+            
+            # Try with explicit path
+            echo "Using explicit path to database:"
+            DATABASE_URL=file:./test.db node -e "
+              const { PrismaClient } = require('@prisma/client');
+              const prisma = new PrismaClient();
+              async function check() {
+                try {
+                  const tables = await prisma.$queryRaw\`SELECT name FROM sqlite_master WHERE type='table'\`;
+                  console.log('Tables via Prisma:', tables);
+                  const recipeCount = await prisma.recipe.count();
+                  console.log('Recipe count:', recipeCount);
+                } catch (e) {
+                  console.error('Error:', e);
+                } finally {
+                  await prisma.$disconnect();
+                }
+              }
+              check();
+            "
