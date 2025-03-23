@@ -38,7 +38,7 @@ async function main() {
     // Seeding Recipe and thus RecipeIngredient Table
     await prisma.recipe.create({
       data: {
-        name: 'Beef and Bacon Chilli',
+        name: 'Beef Chili',
         description: 'Chilli con Carne using Beef mince and bacon lardons',
         servings: 2,
         prepTime: 20,

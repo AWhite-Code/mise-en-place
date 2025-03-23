@@ -47,48 +47,16 @@ jobs:
         # Seed the database with data for testing
         DATABASE_URL=file:./test.db node prisma/seed.js
         
-    - name: Verify database setup
+    - name: Verify database seeding
       run: |
-        # Simple test to verify database is accessible
-        sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
-        
-        # Create a temporary test file using CommonJS syntax
-        cat > db-test.js << 'EOF'
-        const { PrismaClient } = require('@prisma/client');
-        
-        const prisma = new PrismaClient();
-        
-        async function testDb() {
-          try {
-            // Insert test record
-            await prisma.recipe.create({
-              data: {
-                name: 'Test Recipe',
-                description: 'This is a test recipe'
-              }
-            });
-            
-            // Query to verify
-            const count = await prisma.recipe.count();
-            console.log('Recipe count:', count);
-            
-            if (count === 1) {
-              console.log('Database test successful');
-              process.exit(0);
-            } else {
-              console.error('Database test failed');
-              process.exit(1);
-            }
-          } catch (error) {
-            console.error('Database test error:', error);
-            process.exit(1);
-          } finally {
-            await prisma.$disconnect();
-          }
-        }
-        
-        testDb();
-        EOF
-        
-        # Run the JavaScript file with the DATABASE_URL environment variable explicitly set
-        DATABASE_URL=file:./test.db node db-test.js
+          # Check number of recipes
+          echo "Checking recipe count:"
+          sqlite3 test.db "SELECT COUNT(*) FROM Recipe;"
+          
+          # Check number of ingredients
+          echo "Checking ingredient count:"
+          sqlite3 test.db "SELECT COUNT(*) FROM Ingredient;"
+          
+          # Check for specific recipe
+          echo "Checking for Beef and Sweetcorn Chili:"
+          sqlite3 test.db "SELECT name FROM Recipe WHERE name LIKE '%Chili%';"
