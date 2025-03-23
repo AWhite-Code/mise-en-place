@@ -46,17 +46,23 @@ jobs:
       run: |
         # Seed the database with data for testing
         DATABASE_URL=file:./test.db node prisma/seed.js
+
+    - name: Verify database table names
+      run: |
+          # First check what tables actually exist
+          echo "Tables in the database:"
+          sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
         
     - name: Verify database seeding
       run: |
           # Check number of recipes
           echo "Checking recipe count:"
-          sqlite3 test.db "SELECT COUNT(*) FROM recipe;"
+          sqlite3 test.db "SELECT COUNT(*) FROM Recipe;"
           
           # Check number of ingredients
           echo "Checking ingredient count:"
-          sqlite3 test.db "SELECT COUNT(*) FROM ingredient;"
+          sqlite3 test.db "SELECT COUNT(*) FROM Ingredient;"
           
           # Check for specific recipe
           echo "Checking for Beef and Sweetcorn Chili:"
-          sqlite3 test.db "SELECT name FROM recipe WHERE name LIKE '%Chili%';"
+          sqlite3 test.db "SELECT name FROM Recipe WHERE name LIKE '%Chili%';"
