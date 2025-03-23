@@ -42,6 +42,8 @@ jobs:
         # Run migrations to create database and schema
         DATABASE_URL=file:./test.db npx prisma migrate deploy
 
+    - name: Seed database with data for testing
+      run: |
         # Seed the database with data for testing
         DATABASE_URL=file:./test.db node prisma/seed.js
         
