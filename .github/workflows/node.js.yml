@@ -47,45 +47,49 @@ jobs:
         # Seed the database with data for testing
         DATABASE_URL=file:./test.db node prisma/seed.js
 
-    - name: Verify database table names
-      run: |
-          # First check what tables actually exist
-          echo "Tables in the database:"
-          sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
-        
-          - name: Verify database setup
-          run: |
-            # Print the current directory
-            echo "Current directory:"
-            pwd
-            
-            # List files to see if the database file exists
-            echo "Database files:"
-            ls -la *.db
-            
-            # Check if the database has any tables at all
-            echo "All tables in database:"
-            sqlite3 test.db "SELECT name FROM sqlite_master WHERE type='table';"
-            
-            # Print environment variable
-            echo "DATABASE_URL=$DATABASE_URL"
-            
-            # Try with explicit path
-            echo "Using explicit path to database:"
-            DATABASE_URL=file:./test.db node -e "
-              const { PrismaClient } = require('@prisma/client');
-              const prisma = new PrismaClient();
-              async function check() {
-                try {
-                  const tables = await prisma.$queryRaw\`SELECT name FROM sqlite_master WHERE type='table'\`;
-                  console.log('Tables via Prisma:', tables);
-                  const recipeCount = await prisma.recipe.count();
-                  console.log('Recipe count:', recipeCount);
-                } catch (e) {
-                  console.error('Error:', e);
-                } finally {
-                  await prisma.$disconnect();
-                }
+        - name: Verify database seeding
+        run: |
+          # Create a simple verification script
+          cat > verify-seed.js << 'ENDSCRIPT'
+          const { PrismaClient } = require('@prisma/client');
+          const prisma = new PrismaClient();
+          
+          async function verifySeeding() {
+            try {
+              // Get table information
+              const tables = await prisma.$queryRaw`SELECT name FROM sqlite_master WHERE type='table'`;
+              console.log('Tables in database:', tables);
+              
+              // Count recipes
+              const recipeCount = await prisma.recipe.count();
+              console.log('Recipe count:', recipeCount);
+              
+              // Count ingredients
+              const ingredientCount = await prisma.ingredient.count();
+              console.log('Ingredient count:', ingredientCount);
+              
+              // Look for specific recipe
+              const recipe = await prisma.recipe.findFirst({
+                where: { name: { contains: 'Chili' } }
+              });
+              
+              if (recipe) {
+                console.log('Found recipe:', recipe.name);
+                console.log('Verification successful!');
+              } else {
+                console.log('Could not find expected recipe');
+                process.exit(1);
               }
-              check();
-            "
+            } catch (error) {
+              console.error('Verification error:', error);
+              process.exit(1);
+            } finally {
+              await prisma.$disconnect();
+            }
+          }
+          
+          verifySeeding();
+          ENDSCRIPT
+          
+          # Run the verification script with the same DATABASE_URL
+          DATABASE_URL=file:./test.db node verify-seed.js
