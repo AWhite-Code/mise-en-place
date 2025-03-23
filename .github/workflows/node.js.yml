@@ -43,7 +43,7 @@ jobs:
         DATABASE_URL=file:./test.db npx prisma migrate deploy
 
         # Seed the database with data for testing
-        DATABASE_URL=file:./test.db npx ts-node prisma/seed.ts
+        DATABASE_URL=file:./test.db node prisma/seed.js
         
     - name: Verify database setup
       run: |
