@@ -2,10 +2,13 @@
   "name": "mise-en-place",
   "version": "1.0.0",
   "main": "index.js",
+  "prisma": {
+    "seed": "ts-node prisma/base-seed.js"
+  },
   "scripts": {
     "dev": "ts-node src/server.ts",
     "test": "jest",
-    "seed": "ts-node prisma/seeds/base-seed.ts"
+    "seed": "ts-node prisma/seeds/base-seed.js"
   },
   "repository": {
     "type": "git",

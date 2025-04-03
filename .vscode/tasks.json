@@ -4,7 +4,16 @@
       {
         "label": "Clean Database",
         "type": "shell",
-        "command": "rm -f ./dev.db ./dev.db-journal",
+        "command": "if (Test-Path ./dev.db) { Remove-Item ./dev.db -Force }; if (Test-Path ./dev.db-journal) { Remove-Item ./dev.db-journal -Force }",
+        "windows": {
+          "command": "if (Test-Path ./dev.db) { Remove-Item ./dev.db -Force }; if (Test-Path ./dev.db-journal) { Remove-Item ./dev.db-journal -Force }"
+        },
+        "linux": {
+          "command": "rm -f ./dev.db ./dev.db-journal"
+        },
+        "osx": {
+          "command": "rm -f ./dev.db ./dev.db-journal"
+        },
         "presentation": {
           "reveal": "always",
           "panel": "shared"
@@ -24,7 +33,7 @@
       {
         "label": "Seed Database",
         "type": "shell",
-        "command": "npm run seed",
+        "command": "npx prisma db seed",
         "presentation": {
           "reveal": "always",
           "panel": "shared"
@@ -34,7 +43,7 @@
       {
         "label": "Start Server",
         "type": "shell",
-        "command": "ts-node src/server.ts",
+        "command": "npx ts-node src/server.ts",
         "presentation": {
           "reveal": "always",
           "panel": "shared"
