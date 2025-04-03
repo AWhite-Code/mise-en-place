@@ -1,0 +1,60 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Clean Database",
+        "type": "shell",
+        "command": "rm -f ./dev.db ./dev.db-journal",
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Migrations",
+        "type": "shell",
+        "command": "npx prisma migrate deploy",
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Seed Database",
+        "type": "shell",
+        "command": "npm run seed",
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Server",
+        "type": "shell",
+        "command": "ts-node src/server.ts",
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Development Environment",
+        "dependsOrder": "sequence",
+        "dependsOn": [
+          "Clean Database",
+          "Run Migrations",
+          "Seed Database",
+          "Start Server"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": []
+      }
+    ]
+  }

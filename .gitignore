@@ -28,10 +28,14 @@ out/
 
 # IDE and editor specific files
 .idea/
-.vscode/
 *.swp
 *.swo
 .DS_Store
+
+# VS Code files
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json
 
 # Operating system files
 Thumbs.db
