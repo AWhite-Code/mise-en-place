@@ -1,11 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// prisma/seeds/base-seed.ts
+import { PrismaClient } from '@prisma/client';
 
-async function main() {
-    // Clear out old content - don't think I need it but this is good practice lol
-    await prisma.recipeIngredient.deleteMany({})
-    await prisma.recipe.deleteMany({})
-    await prisma.ingredient.deleteMany({})
+export async function seed(prisma: PrismaClient) {
+    // Clear out old content
+    await prisma.recipeIngredient.deleteMany({});
+    await prisma.recipe.deleteMany({});
+    await prisma.ingredient.deleteMany({});
 
     // Seeding Ingredients Table
     const ingredientsArray = await Promise.all([
@@ -29,11 +29,11 @@ async function main() {
         beefMince: ingredientsArray[2],
         lardons: ingredientsArray[3],
         sweetCorn: ingredientsArray[4],
-        redPepper: ingredientsArray[5],
-        beefStock: ingredientsArray[6],
-        kidneyBeans: ingredientsArray[7],
-        tomatoPuree: ingredientsArray[8]
-    }
+        redPepper: ingredientsArray[8], // Corrected index based on array order
+        beefStock: ingredientsArray[9], // Corrected index based on array order
+        kidneyBeans: ingredientsArray[10], // Corrected index based on array order
+        tomatoPuree: ingredientsArray[11] // Corrected index based on array order
+    };
 
     // Seeding Recipe and thus RecipeIngredient Table
     await prisma.recipe.create({
@@ -105,16 +105,20 @@ async function main() {
           ]
         }
       }
-
     });
-    console.log('Database has been seeded!')
+    
+    console.log('Database has been seeded!');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// For direct CLI execution
+if (require.main === module) {
+    const prismaInstance = new PrismaClient();
+    seed(prismaInstance)
+      .catch((e) => {
+        console.error(e);
+        process.exit(1);
+      })
+      .finally(async () => {
+        await prismaInstance.$disconnect();
+      });
+}
