@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "prisma": {
-    "seed": "ts-node prisma/base-seed.js"
+    "seed": "ts-node prisma/seeds/base-seed.ts"
   },
   "scripts": {
     "dev": "ts-node src/server.ts",
     "test": "jest",
-    "seed": "ts-node prisma/seeds/base-seed.js"
+    "seed": "ts-node prisma/seeds/base-seed.ts"
   },
   "repository": {
     "type": "git",
