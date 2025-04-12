@@ -1,4 +1,4 @@
-import { prisma, resetWithBaseSeed } from '../prisma/utils/db-utils';
+import { prisma, resetWithBaseSeed } from '../prisma/utils/db-utils.js';
 
 describe('Recipe API', () => {
     // Reset database before each test

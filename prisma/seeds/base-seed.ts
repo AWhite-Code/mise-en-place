@@ -1,5 +1,5 @@
-// prisma/seeds/base-seed.ts
 import { PrismaClient } from '@prisma/client';
+import { fileURLToPath } from 'url';
 
 export async function seed(prisma: PrismaClient) {
     // Clear out old content
@@ -110,8 +110,10 @@ export async function seed(prisma: PrismaClient) {
     console.log('Database has been seeded!');
 }
 
-// For direct CLI execution
-if (require.main === module) {
+// Check if this module is being run directly
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
     const prismaInstance = new PrismaClient();
     seed(prismaInstance)
       .catch((e) => {
