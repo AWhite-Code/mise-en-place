@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
-import { prisma } from './prisma/client';
-import { resetWithBaseSeed } from './prisma/utils/db-utils';
+import { prisma } from './prisma/client.js';
+import { resetWithBaseSeed } from './prisma/utils/db-utils.js';
 
 beforeAll(async () => {
 
