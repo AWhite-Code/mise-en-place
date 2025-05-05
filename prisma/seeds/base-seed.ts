@@ -113,6 +113,7 @@ export async function seed(prisma: PrismaClient) {
 // Check if this module is being run directly
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 
+/*
 if (isMainModule) {
     const prismaInstance = new PrismaClient();
     seed(prismaInstance)
@@ -124,3 +125,4 @@ if (isMainModule) {
         await prismaInstance.$disconnect();
       });
 }
+      */
