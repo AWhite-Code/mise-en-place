@@ -1,17 +1,25 @@
-// src/server.ts
-import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import express, { Express, Request, Response, NextFunction } from 'express';
+import 'dotenv/config'
 
-// Set __filename and __dirname for ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const app: Express = express();
+const PORT = process.env.DATABASE_PORT
 
-dotenv.config();
+app.use(express.json());
 
-console.log("Recipe App server starting...");
-console.log("Database URL:", process.env.DATABASE_URL);
-console.log("Environment:", process.env.NODE_ENV || "development");
+// Health Check to make sure its not broken lol
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'Recipe API is running!' });
+});
+  
 
-// This is just a placeholder until you implement your actual server
-console.log("Server functionality will be implemented here");
+// Error Handling Middleware
+// NOTE: MUST KEEP AT END OF CODE, NO MORE MIDDLEWARE BELOW THIS
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack); // Log the full error for debugging
+  res.status(500).json({ error: 'Internal Server Error' }); // Send a generic response
+});
+
+// Run the server
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}`)
+})
