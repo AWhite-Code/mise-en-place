@@ -1,5 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import 'dotenv/config'
+import ingredientsRouter from './routes/ingredients.js';
 
 const app: Express = express();
 const PORT = process.env.DATABASE_PORT
@@ -10,6 +11,8 @@ app.use(express.json());
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({ message: 'Recipe API is running!' });
 });
+
+app.use('/api/ingredients', ingredientsRouter);
   
 
 // Error Handling Middleware
