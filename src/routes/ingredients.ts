@@ -6,8 +6,28 @@ const router = Router();
 // GET all ingredients
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const allIngredients = await prisma.ingredient.findMany();
-        res.status(200).json(allIngredients);
+        const { search } = req.query;
+
+        // Build the query options in a variable 
+        // Either passing 'as is' for findMany or adding a name for targeted search
+        const queryOptions = {
+            where: {},
+        };
+
+        // If a search term exists, add it to the 'where' clause
+        if (search) {
+            queryOptions.where = {
+                name: {
+                    contains: search as string,
+                    mode: 'insensitive',
+                },
+            };
+        }
+
+        const ingredients = await prisma.ingredient.findMany(queryOptions);
+
+        res.status(200).json(ingredients);
+        
     } catch (error) {
         next(error);
     }

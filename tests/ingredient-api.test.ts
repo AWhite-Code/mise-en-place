@@ -1,6 +1,7 @@
 import { prisma, resetWithBaseSeed} from '../prisma/utils/db-utils.js';
 import supertest from 'supertest';
 import app from '../src/server.js';
+import { randomUUID } from 'crypto'; // Import Node.js's crypto module
 
 const REQUEST = supertest(app);
 
@@ -31,4 +32,19 @@ describe('Ingredient API', () => {
         expect(RESPONSE.body.name).toBe('Onion');
 
     })
+
+    test('GET /api/ingredients/:id should return 404 for a non-existent ID', async () => {
+        const fakeId = randomUUID();
+        const response = await REQUEST.get(`/api/ingredients/${fakeId}`);
+        expect(response.status).toBe(404);
+    });
+
+    test('GET /api/ingredients?search=Garlic should return the "Garlic" ingredient', async () => {
+    const response = await REQUEST.get('/api/ingredients?search=Garlic');
+    
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBe(1);
+    expect(response.body[0].name).toBe('Garlic');
+    });
 });
