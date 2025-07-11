@@ -12,17 +12,21 @@ app.get('/', (req: Request, res: Response) => {
   res.status(200).json({ message: 'Recipe API is running!' });
 });
 
+//APIs
 app.use('/api/ingredients', ingredientsRouter);
   
 
 // Error Handling Middleware
 // NOTE: MUST KEEP AT END OF CODE, NO MORE MIDDLEWARE BELOW THIS
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack); // Log the full error for debugging
-  res.status(500).json({ error: 'Internal Server Error' }); // Send a generic response
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Run the server
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`)
 })
+
+
+export default app;
