@@ -8,11 +8,14 @@ node_modules/
 .env.test
 .env.production
 
-# SQLite database files
+# SQLite database files (Deprecated)
 *.db
 *.db-journal
 prisma/dev.db
 prisma/dev.db-journal
+
+# 
+*postgres-data
 
 # Logs
 npm-debug.log*

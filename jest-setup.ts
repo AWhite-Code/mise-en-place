@@ -4,11 +4,13 @@ import { resetWithBaseSeed } from './prisma/utils/db-utils.js';
 
 beforeAll(async () => {
 
+    // Point to the test database
+    process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+
     // Set up the test database schema
     console.log('Applying migrations to test database...');
-    execSync('npx prisma migrate deploy', { 
-        env: { ...process.env, DATABASE_URL: 'file:./prisma/test.db' } 
-    });
+    // Use the DATABASE_URL set above
+    execSync('npx prisma migrate deploy');
     
     // Initialize test database with base seed
     console.log('Seeding test database...');
