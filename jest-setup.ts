@@ -7,9 +7,7 @@ beforeAll(async () => {
     // Point to the test database
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 
-    // Set up the test database schema
     console.log('Applying migrations to test database...');
-    // Use the DATABASE_URL set above
     execSync('npx prisma migrate deploy');
     
     // Initialize test database with base seed

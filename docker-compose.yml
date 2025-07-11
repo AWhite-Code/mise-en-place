@@ -2,7 +2,7 @@
 version: '3.8'
 services:
   db:
-    image: postgres:15 # Use the official PostgreSQL image, version 15
+    image: postgres:15 # PostgreSQL version 15
     restart: always
     environment:
       POSTGRES_USER: myuser
@@ -11,7 +11,7 @@ services:
     ports:
       - '5432:5432' # Map port 5432 on your computer to port 5432 in the container
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data # Persist data on your local machine
+      - ./postgres-data:/var/lib/postgresql/data # Persist data on local machine
 
 volumes:
   postgres-data:
