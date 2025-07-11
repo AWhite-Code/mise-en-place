@@ -1,0 +1,34 @@
+import { prisma, resetWithBaseSeed} from '../prisma/utils/db-utils.js';
+import supertest from 'supertest';
+import app from '../src/server.js';
+
+const REQUEST = supertest(app);
+
+describe('Ingredient API', () => {
+    // Reset database before each test to guarantee the tests receives the data it is looking for
+    beforeEach(async () => {
+        await resetWithBaseSeed();
+    });
+    
+    test('GET /api/ingredients should return all seeded ingredients', async () => {
+        const RESPONSE = await REQUEST.get('/api/ingredients');
+        
+        expect(RESPONSE.status).toBe(200);
+        expect(RESPONSE.body).toBeInstanceOf(Array);
+        expect(RESPONSE.body.length).toBeGreaterThan(0);
+    });
+
+    test('GET /api/ingredients should return the first ingredient', async () =>{
+        const Ingredient_ID = await prisma.ingredient.findFirst({
+            where: { name: 'Onion'}
+        });
+        const ONION_ID = Ingredient_ID?.id;
+        const RESPONSE = await REQUEST.get(`/api/ingredients/${ONION_ID}`);
+
+        expect(RESPONSE.status).toBe(200);
+        expect(RESPONSE.body).toBeInstanceOf(Object);
+        expect(RESPONSE.body.id).toBe(ONION_ID);
+        expect(RESPONSE.body.name).toBe('Onion');
+
+    })
+});
