@@ -60,7 +60,6 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         const { name } = req.body;
 
         if (!name || typeof name !== 'string') {
-            // This path returns a Response
             res.status(400).json({ error: 'Ingredient name must be a non-empty string.' });
         }
 

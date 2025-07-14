@@ -89,4 +89,11 @@ describe('Ingredient API', () => {
             expect(response.body.name).toBe('potato');  // Output should always be all lower case
         });
     });
+
+    // Failure Tests
+    test('should return status 400 if name is missing', async () => {
+        const response = await REQUEST.post('/api/ingredients').send({}); // Send an empty body
+
+        expect(response.status).toBe(400);
+    });
 });
