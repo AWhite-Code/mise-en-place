@@ -24,9 +24,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Run the server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`)
 })
 
-
-export default app;
+export {app, server};

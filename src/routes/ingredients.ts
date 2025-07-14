@@ -54,4 +54,29 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
+// POST Ingredient
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name } = req.body;
+
+        if (!name || typeof name !== 'string') {
+            // This path returns a Response
+            res.status(400).json({ error: 'Ingredient name must be a non-empty string.' });
+        }
+
+        const normalizedName = name.toLowerCase();
+
+        const createdIngredient = await prisma.ingredient.create({
+            data: {
+                name: normalizedName,
+            },
+        });
+
+        res.status(201).json(createdIngredient);
+
+    } catch (error) {
+        next(error);
+    }
+});
+
 export default router;
