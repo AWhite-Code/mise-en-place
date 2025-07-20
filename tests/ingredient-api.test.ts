@@ -131,4 +131,31 @@ describe('Ingredient API', () => {
             expect(response.status).toBe(400);
         });
     });
+
+    describe('DELETE /api/ingredients/:id', () => {
+        test('should delete an existing ingredient and return a 200 status', async () => {
+            const ingredient = await prisma.ingredient.findFirst({
+                where: { name: 'Onion' },
+            });
+            const ingredientId = ingredient?.id;
+
+            const response = await REQUEST.delete(`/api/ingredients/${ingredientId}`);
+
+            expect(response.status).toBe(200);
+
+            // Ensure the item is actually gone from the database
+            const deletedIngredient = await prisma.ingredient.findUnique({
+                where: { id: ingredientId },
+            });
+            expect(deletedIngredient).toBeNull();
+        });
+
+        test('should return a 404 status if the ingredient does not exist', async () => {
+            const fakeId = randomUUID();
+
+            const response = await REQUEST.delete(`/api/ingredients/${fakeId}`);
+
+            expect(response.status).toBe(404);
+        });
+    });
 });

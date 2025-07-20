@@ -99,9 +99,30 @@ router.patch('/:id', async (req, res, next) => {
         res.status(200).json(updatedIngredient);
     } 
     
+    // NOTE: Turn this into a function? I've used it twice now
     catch (error) {
         if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-            // If it's a Prisma "not found" error, send 404
+            res.status(404).json({ error: 'Ingredient not found' });
+            return;
+        }       
+        next(error);
+    }
+});
+
+router.delete('/:id', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        await prisma.ingredient.delete({
+            where: { id },
+        });
+
+        res.status(200).json({ message: 'Ingredient deleted successfully' });
+    }   
+
+    // See above Note (Duplicated method)
+    catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
             res.status(404).json({ error: 'Ingredient not found' });
             return;
         }       
