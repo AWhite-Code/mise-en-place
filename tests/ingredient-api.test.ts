@@ -113,5 +113,22 @@ describe('Ingredient API', () => {
             expect(response.body.name).toBe('yellow onion');
             expect(response.body.id).toBe(onionId);
         });
+
+        // Failure Tests
+        test('should return 404 if the ingredient to update does not exist', async () => {
+            const fakeId = randomUUID();
+            const response = await REQUEST.patch(`/api/ingredients/${fakeId}`).send({ name: 'new name' });
+
+            expect(response.status).toBe(404);
+        });
+
+        test('should return 400 if the new name is invalid', async () => {
+            const ingredient = await prisma.ingredient.findFirst({ where: { name: 'onion' } });
+            const ingredientId = ingredient?.id;
+            
+            const response = await REQUEST.patch(`/api/ingredients/${ingredientId}`).send({ name: '' });
+
+            expect(response.status).toBe(400);
+        });
     });
 });
