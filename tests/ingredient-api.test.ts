@@ -88,12 +88,30 @@ describe('Ingredient API', () => {
             expect(response.body.id).toBeDefined();
             expect(response.body.name).toBe('potato');  // Output should always be all lower case
         });
+
+        // Failure Tests
+        test('should return status 400 if name is missing', async () => {
+            const response = await REQUEST.post('/api/ingredients').send({}); // Send an empty body
+
+            expect(response.status).toBe(400);
+        });
     });
 
-    // Failure Tests
-    test('should return status 400 if name is missing', async () => {
-        const response = await REQUEST.post('/api/ingredients').send({}); // Send an empty body
 
-        expect(response.status).toBe(400);
+    describe('PATCH Requests', () => {
+        test('PATCH /api/ingredients/:id should update an ingredient name', async () => {
+            const ingredientToUpdate = await prisma.ingredient.findFirst({
+                where: { name: 'Onion' },
+            });
+            const onionId = ingredientToUpdate?.id;
+
+            const updatedData = { name: 'yellow onion' };
+
+            const response = await REQUEST.patch(`/api/ingredients/${onionId}`).send(updatedData);
+
+            expect(response.status).toBe(200);
+            expect(response.body.name).toBe('yellow onion');
+            expect(response.body.id).toBe(onionId);
+        });
     });
 });
