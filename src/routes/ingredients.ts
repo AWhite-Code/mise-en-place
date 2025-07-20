@@ -61,6 +61,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
         if (!name || typeof name !== 'string') {
             res.status(400).json({ error: 'Ingredient name must be a non-empty string.' });
+            return;
         }
 
         const normalizedName = name.toLowerCase();
@@ -87,6 +88,7 @@ router.patch('/:id', async (req, res, next) => {
         // Validation
         if (!name || typeof name !== 'string') {
             res.status(400).json({ error: 'Ingredient name must be a non-empty string.' });
+            return;
         }
 
         const updatedIngredient = await prisma.ingredient.update({
@@ -104,8 +106,10 @@ router.patch('/:id', async (req, res, next) => {
         if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
             res.status(404).json({ error: 'Ingredient not found' });
             return;
-        }       
-        next(error);
+        }      
+        else{
+            next(error);
+        }
     }
 });
 
@@ -126,7 +130,9 @@ router.delete('/:id', async (req, res, next) => {
             res.status(404).json({ error: 'Ingredient not found' });
             return;
         }       
-        next(error);
+        else {
+            next(error);
+        }
     }
 });
 
