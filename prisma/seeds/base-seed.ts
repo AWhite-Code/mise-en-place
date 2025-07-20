@@ -29,10 +29,10 @@ export async function seed(prisma: PrismaClient) {
         beefMince: ingredientsArray[2],
         lardons: ingredientsArray[3],
         sweetCorn: ingredientsArray[4],
-        redPepper: ingredientsArray[8], // Corrected index based on array order
-        beefStock: ingredientsArray[9], // Corrected index based on array order
-        kidneyBeans: ingredientsArray[10], // Corrected index based on array order
-        tomatoPuree: ingredientsArray[11] // Corrected index based on array order
+        redPepper: ingredientsArray[8],
+        beefStock: ingredientsArray[9],
+        kidneyBeans: ingredientsArray[10],
+        tomatoPuree: ingredientsArray[11]
     };
 
     // Seeding Recipe and thus RecipeIngredient Table
@@ -112,17 +112,3 @@ export async function seed(prisma: PrismaClient) {
 
 // Check if this module is being run directly
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
-
-/*
-if (isMainModule) {
-    const prismaInstance = new PrismaClient();
-    seed(prismaInstance)
-      .catch((e) => {
-        console.error(e);
-        process.exit(1);
-      })
-      .finally(async () => {
-        await prismaInstance.$disconnect();
-      });
-}
-      */
