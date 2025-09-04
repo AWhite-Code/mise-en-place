@@ -1,6 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import 'dotenv/config'
 import ingredientsRouter from './routes/ingredients.js';
+import recipesRouter from './routes/recipes.js'; 
 
 const app: Express = express();
 const PORT = process.env.DATABASE_PORT
@@ -14,6 +15,7 @@ app.get('/', (req: Request, res: Response) => {
 
 //APIs
 app.use('/api/ingredients', ingredientsRouter);
+app.use('/api/recipes', recipesRouter);
   
 
 // Error Handling Middleware

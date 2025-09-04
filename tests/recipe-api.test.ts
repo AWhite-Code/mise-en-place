@@ -33,6 +33,15 @@ describe('Recipe API', () => {
         const response = await request.get(`/api/recipes/${recipe?.id}`); // NOTE: This route doesn't exist yet!
 
         expect(response.status).toBe(200);
-        expect(response.body.description).toContain('Chilli con Carne');
+        expect(response.body.description).toContain('Beef Chili');
+    });
+
+        test('GET /api/recipes should return all seeded recipes', async () => {
+        const response = await request.get('/api/recipes');
+
+        expect(response.status).toBe(200);
+        expect(response.body).toBeInstanceOf(Array);
+        expect(response.body.length).toBe(1);
+        expect(response.body[0].name).toBe('Beef Chili');
     });
 });
