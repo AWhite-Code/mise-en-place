@@ -1,114 +1,74 @@
 import { PrismaClient } from '@prisma/client';
-import { fileURLToPath } from 'url';
 
 export async function seed(prisma: PrismaClient) {
-    // Clear out old content
+    console.log('Starting seed...');
+    // 1. Clear out old content
     await prisma.recipeIngredient.deleteMany({});
     await prisma.recipe.deleteMany({});
     await prisma.ingredient.deleteMany({});
+    console.log('Existing data deleted.');
 
-    // Seeding Ingredients Table
-    const ingredientsArray = await Promise.all([
-        prisma.ingredient.create({data: { name: 'Onion' }}),
-        prisma.ingredient.create({data: { name: 'Garlic' }}),
-        prisma.ingredient.create({data: { name: 'Beef Mince' }}),
-        prisma.ingredient.create({data: { name: 'Lardons' }}),
-        prisma.ingredient.create({data: { name: 'Sweetcorn' }}),
-        prisma.ingredient.create({data: { name: 'Smoked Paprika' }}),
-        prisma.ingredient.create({data: { name: 'Cayenne Pepper' }}),
-        prisma.ingredient.create({data: { name: 'Cumin' }}),
-        prisma.ingredient.create({data: { name: 'Red Pepper' }}),
-        prisma.ingredient.create({data: { name: 'Beef Stock' }}),
-        prisma.ingredient.create({data: { name: 'Kidney Beans' }}),
-        prisma.ingredient.create({data: { name: 'Tomato Puree' }})
-    ]);
+    // 2. Seed all ingredients at once using lowercase
+    const ingredientsData = [
+        { name: 'onion' }, { name: 'garlic' }, { name: 'beef mince' },
+        { name: 'lardons' }, { name: 'sweetcorn' }, { name: 'smoked paprika' },
+        { name: 'cayenne pepper' }, { name: 'cumin' }, { name: 'red pepper' },
+        { name: 'beef stock' }, { name: 'kidney beans' }, { name: 'tomato puree' }
+    ];
+    await prisma.ingredient.createMany({ data: ingredientsData });
+    console.log('Ingredients seeded.');
 
-    const ingredientsByName = {
-        onion: ingredientsArray[0],
-        garlic: ingredientsArray[1],
-        beefMince: ingredientsArray[2],
-        lardons: ingredientsArray[3],
-        sweetCorn: ingredientsArray[4],
-        redPepper: ingredientsArray[8],
-        beefStock: ingredientsArray[9],
-        kidneyBeans: ingredientsArray[10],
-        tomatoPuree: ingredientsArray[11]
-    };
+    // 3. Get the newly created ingredients to build a reliable lookup map
+    const ingredientsFromDb = await prisma.ingredient.findMany();
+    const ingredientsMap = new Map(ingredientsFromDb.map(i => [i.name, i.id]));
 
-    // Seeding Recipe and thus RecipeIngredient Table
-    await prisma.recipe.create({
+    // 4. Seed the Recipe
+    const newRecipe = await prisma.recipe.create({
       data: {
         name: 'Beef Chili',
         description: 'Chilli con Carne using Beef mince and bacon lardons',
         servings: 2,
         prepTime: 20,
         cookTime: 120,
-        instructions: 
-        `1. Put the Beef stock pot in a jug and add the correct amount (see packet - probably 400 ml) of boiling water. Stir until the stock pot is dissolved. You can be doing this while cooking the onions and peppers.
-        2. Heat some oil in a suitable frying pan (medium heat). Add the onions and pepper and cook for 10 minutes stirring regularly.
-        3. Add the garlic and cook for 2 minutes
-        4. Add the bacon/lardons. Stir and cook for 4 minutes or until cooked.
-        5. Add the chilli con carne mix. Stir in and cook for 2 minutes.
-        6. Add the mince. Stir regularly. Continue until all the minced is cooked.
-        7. Add the tomato puree and the beef stock. Stir thoroughly. Bring to the boil and then turn down to a simmer.
-        8. Allow to simmer for at least 20 minutes.
-        9. Taste it.
-        10. You might want to add some salt. If you want it to be sweeter add tomato ketchup.
-        11. If starting from cold (i.e. the next day) start by reheating the chilli gently. Skip if you are just continuing from above.
-        12. Drain the sweet corn and add it to the pan. Stir it in.
-        13. Turn the heat up to high (not the highest) and boil off the remaining liquid. You will
-        need to pay attention and stir regularly to stop it from burning.
-        14. Stop when you have the consistency you want.`,
-        
-        recipeIngredients: {
-          create: [
-            {
-              quantity: 500,
-              unit: 'g',
-              ingredient: { connect: { id: ingredientsByName.beefMince.id}}
-            },
-            {
-              quantity: 100,
-              unit: 'g',
-              ingredient: { connect: { id: ingredientsByName.lardons.id} }
-            },
-            {
-              quantity: 1,
-              unit: 'clove - chopped',
-              ingredient: { connect: { id: ingredientsByName.garlic.id} }
-            },
-            {
-              quantity: 1,
-              unit: 'tin',
-              ingredient: { connect: { id: ingredientsByName.sweetCorn.id} }
-            },
-            {
-              quantity: 2,
-              unit: 'tbsp',
-              ingredient: { connect: { id: ingredientsByName.tomatoPuree.id} }
-            },
-            {
-              quantity: 1,
-              unit: 'Diced',
-              ingredient: { connect: { id: ingredientsByName.onion.id} }
-            },
-            {
-              quantity: 0.5,
-              unit: 'Diced',
-              ingredient: { connect: { id: ingredientsByName.redPepper.id} }
-            },
-            {
-              quantity: 1,
-              unit: 'stock cube in 400ml of water',
-              ingredient: { connect: { id: ingredientsByName.beefStock.id} }
-            },
-          ]
-        }
+        instructions: `1. Put the Beef stock pot in a jug and add the correct amount of boiling water.
+2. Heat some oil in a suitable frying pan (medium heat). Add the onions and pepper and cook for 10 minutes.
+3. Add the garlic and cook for 2 minutes.
+4. Add the bacon/lardons and cook for 4 minutes.
+5. Add the chilli con carne mix and cook for 2 minutes.
+6. Add the mince and cook until browned.
+7. Add the tomato puree and the beef stock. Bring to the boil and then simmer.
+8. Allow to simmer for at least 20 minutes.
+9. Taste and season.
+10. Add ketchup for sweetness if desired.
+11. Reheat gently if starting from cold.
+12. Drain and add sweet corn.
+13. Turn up the heat to boil off remaining liquid.
+14. Stop when you have the desired consistency.`,
       }
     });
+    console.log('Recipes seeded.');
+
+    // 5. Create the data for the links
+    const recipeIngredientsLinks = [
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('beef mince'), quantity: 500, unit: 'g' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('lardons'), quantity: 100, unit: 'g' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('garlic'), quantity: 1, unit: 'clove - chopped' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('sweetcorn'), quantity: 1, unit: 'tin' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('tomato puree'), quantity: 2, unit: 'tbsp' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('onion'), quantity: 1, unit: 'Diced' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('red pepper'), quantity: 0.5, unit: 'Diced' },
+        { recipeId: newRecipe.id, ingredientId: ingredientsMap.get('beef stock'), quantity: 1, unit: 'stock cube in 400ml of water' },
+    ];
+
+    // 6. Filter out any items where the ingredientId might be undefined
+    const validRecipeIngredientsData = recipeIngredientsLinks.filter(
+        (link): link is { recipeId: string; ingredientId: string; quantity: number; unit: string } =>
+            link.ingredientId !== undefined
+    );
+
+    // 7. Seed the RecipeIngredient links separately
+    await prisma.recipeIngredient.createMany({ data: validRecipeIngredientsData });
+    console.log('Recipe-ingredient relations seeded.');
     
     console.log('Database has been seeded!');
 }
-
-// Check if this module is being run directly
-const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
