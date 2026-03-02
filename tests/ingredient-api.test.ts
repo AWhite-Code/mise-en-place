@@ -83,7 +83,7 @@ describe('Ingredient API', () => {
     describe('POST Requests', () => {
         test('should create a new ingredient and return it with status 201', async () => {
             const newIngredient = {
-                name: 'Potato', // If altering tests make sure it is capitalised to test if API is normalising the inputs
+                name: 'Potato', // Note when altering tests make sure it is capitalised to test if API is normalising the inputs
             };
 
             const response = await REQUEST.post('/api/ingredients').send(newIngredient);
@@ -99,6 +99,13 @@ describe('Ingredient API', () => {
 
             expect(response.status).toBe(400);
         });
+
+        test('should return 409 if an ingredient with the same name already exists', async () => {
+            const response = await REQUEST.post('/api/ingredients').send({ name: 'Onion' });
+
+            expect(response.status).toBe(409);
+            expect(response.body.error).toContain('already exists');
+});
     });
 
 
@@ -138,18 +145,17 @@ describe('Ingredient API', () => {
 
     describe('DELETE /api/ingredients/:id', () => {
         test('should delete an existing ingredient and return a 200 status', async () => {
-            const ingredient = await prisma.ingredient.findFirst({
-                where: { name: 'onion' },
+            // Create an ingredient that isn't used in any recipe
+            const standalone = await prisma.ingredient.create({
+                data: { name: 'standalone test ingredient' },
             });
-            const ingredientId = ingredient?.id;
 
-            const response = await REQUEST.delete(`/api/ingredients/${ingredientId}`);
+            const response = await REQUEST.delete(`/api/ingredients/${standalone.id}`);
 
             expect(response.status).toBe(200);
 
-            // Ensure the item is actually gone from the database
             const deletedIngredient = await prisma.ingredient.findUnique({
-                where: { id: ingredientId },
+                where: { id: standalone.id },
             });
             expect(deletedIngredient).toBeNull();
         });
@@ -160,6 +166,22 @@ describe('Ingredient API', () => {
             const response = await REQUEST.delete(`/api/ingredients/${fakeId}`);
 
             expect(response.status).toBe(404);
+        });
+
+        test('should return 409 when deleting an ingredient that is used in a recipe', async () => {
+            // Find an ingredient that is linked to the Beef Chili recipe
+            const ingredient = await prisma.ingredient.findFirst({
+                where: {
+                    recipeIngredients: {
+                        some: {},
+                    },
+                },
+            });
+
+            const response = await REQUEST.delete(`/api/ingredients/${ingredient?.id}`);
+
+            expect(response.status).toBe(409);
+            expect(response.body.error).toContain('used in recipes');
         });
     });
 });
