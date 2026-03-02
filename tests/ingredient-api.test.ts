@@ -58,7 +58,7 @@ describe('Ingredient API', () => {
             expect(response.body[0].name).toBe('garlic');
         });
 
-        // Failure Tests
+        // Failure Test
         test('GET /api/ingredients/:id should return 404 for a non-existent ID', async () => {
             const fakeId = randomUUID();
             const response = await REQUEST.get(`/api/ingredients/${fakeId}`);

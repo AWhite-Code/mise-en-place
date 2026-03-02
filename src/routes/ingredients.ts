@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../../prisma/client.js';
 import { isPrismaError } from '../utils/prisma-errors.js';
-
+import { fuzzySearchByName } from '../utils/fuzzy-search.js';
 const router = Router();
 
 // GET all ingredients
@@ -9,26 +9,31 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { search } = req.query;
 
-        // Build the query options in a variable 
-        // Either passing 'as is' for findMany or adding a name for targeted search
-        const queryOptions = {
-            where: {},
-        };
-
-        // If a search term exists, add it to the 'where' clause
         if (search) {
-            queryOptions.where = {
-                name: {
-                    contains: search as string,
-                    mode: 'insensitive',
-                },
-            };
+            const matches = await fuzzySearchByName('Ingredient', search as string);
+
+            if (matches.length === 0) {
+                res.status(200).json([]);
+                return;
+            }
+
+            const ids = matches.map(m => m.id);
+
+            const ingredients = await prisma.ingredient.findMany({
+                where: { id: { in: ids } },
+            });
+
+            // Preserve similarity ranking from the fuzzy search
+            const sorted = ids
+                .map(id => ingredients.find(i => i.id === id))
+                .filter(Boolean);
+
+            res.status(200).json(sorted);
+            return;
         }
 
-        const ingredients = await prisma.ingredient.findMany(queryOptions);
-
+        const ingredients = await prisma.ingredient.findMany();
         res.status(200).json(ingredients);
-        
     } catch (error) {
         next(error);
     }
