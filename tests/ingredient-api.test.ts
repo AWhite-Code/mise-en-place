@@ -1,38 +1,32 @@
 import supertest from 'supertest';
-import { app, server } from '../src/server.js';
+import { app } from '../src/app.js';
 import { prisma } from '../prisma/client.js';
 import { resetWithBaseSeed, cleanDatabase } from '../prisma/utils/db-utils.js';
 import { execSync } from 'child_process';
-import dotenv from 'dotenv';
 import { randomUUID } from 'crypto';
 
 const REQUEST = supertest(app);
 
-dotenv.config({ path: './.env.test' });
-
 describe('Ingredient API', () => {
-    
-    // Run migrations on the test database before any tests run
+
     beforeAll(() => {
-        console.log('Applying migrations to test database...');
-        execSync('npx prisma migrate deploy');
+        console.log('Test DATABASE_URL:', process.env.DATABASE_URL);
+        execSync('npx prisma migrate deploy', {
+            env: { ...process.env },
+        });
     });
 
-    // Seed the database before each test
     beforeEach(async () => {
         await resetWithBaseSeed();
     });
 
     afterEach(async () => {
         await cleanDatabase();
-    })
-
-    // Disconnect from the database after all tests are done
-    afterAll(async () => {
-        await prisma.$disconnect();
-        server.close();
     });
 
+    afterAll(async () => {
+        await prisma.$disconnect();
+    });
     describe('GET Requests', () => {
         test('GET /api/ingredients should return all seeded ingredients', async () => {
             const RESPONSE = await REQUEST.get('/api/ingredients');
@@ -105,7 +99,7 @@ describe('Ingredient API', () => {
 
             expect(response.status).toBe(409);
             expect(response.body.error).toContain('already exists');
-});
+        });
     });
 
 

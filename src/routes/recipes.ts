@@ -7,80 +7,6 @@ const router = Router();
 // GET all recipes
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const allRecipes = await prisma.recipe.findMany();
-        res.status(200).json(allRecipes);
-    } catch (error) {
-        next(error);
-    }
-});
-
-router.get('/:id', async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const recipe = await prisma.recipe.findUnique({
-            where: { id },
-        });
-
-        if (!recipe) {
-            res.status(404).json({ error: 'Recipe not found' });
-            return;
-        }
-
-        res.status(200).json(recipe);
-
-    } catch (error) {
-        next(error);
-    }
-});
-
-// POST Recipe
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { name, description, servings, prepTime, cookTime, instructions, ingredients } = req.body;
-
-        if (!name || typeof name !== 'string' || name.trim().length === 0) {
-            res.status(400).json({ error: 'Recipe name must be a non-empty string.' });
-            return;
-        }
-
-        const recipe = await prisma.recipe.create({
-            data: {
-                name: name.trim(),
-                description: description ?? null,
-                servings: servings ?? 1,
-                prepTime: prepTime ?? null,
-                cookTime: cookTime ?? null,
-                instructions: instructions ?? null,
-                recipeIngredients: {
-                    create: Array.isArray(ingredients)
-                        ? ingredients.map((ing: { ingredientId: string; quantity: number; unit: string }) => ({
-                            ingredientId: ing.ingredientId,
-                            quantity: ing.quantity ?? 0,
-                            unit: ing.unit,
-                        }))
-                        : [],
-                },
-            },
-            include: {
-                recipeIngredients: {
-                    include: { ingredient: true },
-                },
-            },
-        });
-
-        res.status(201).json(recipe);
-    } catch (error) {
-        if (isPrismaError(error, 'P2003')) {
-            res.status(400).json({ error: 'One or more ingredient IDs are invalid.' });
-            return;
-        }
-        next(error);
-    }
-});
-
-// GET all recipes
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-    try {
         const { search } = req.query;
 
         const queryOptions: any = {
@@ -127,6 +53,51 @@ router.get('/:id', async (req, res, next) => {
 
         res.status(200).json(recipe);
     } catch (error) {
+        next(error);
+    }
+});
+
+// POST Recipe
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, description, servings, prepTime, cookTime, instructions, ingredients } = req.body;
+
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            res.status(400).json({ error: 'Recipe name must be a non-empty string.' });
+            return;
+        }
+
+        const recipe = await prisma.recipe.create({
+            data: {
+                name: name.trim(),
+                description: description ?? null,
+                servings: servings ?? 1,
+                prepTime: prepTime ?? null,
+                cookTime: cookTime ?? null,
+                instructions: instructions ?? null,
+                recipeIngredients: {
+                    create: Array.isArray(ingredients)
+                        ? ingredients.map((ing: { ingredientId: string; quantity: number; unit: string }) => ({
+                            ingredientId: ing.ingredientId,
+                            quantity: ing.quantity ?? 0,
+                            unit: ing.unit,
+                        }))
+                        : [],
+                },
+            },
+            include: {
+                recipeIngredients: {
+                    include: { ingredient: true },
+                },
+            },
+        });
+
+        res.status(201).json(recipe);
+    } catch (error) {
+        if (isPrismaError(error, 'P2003')) {
+            res.status(400).json({ error: 'One or more ingredient IDs are invalid.' });
+            return;
+        }
         next(error);
     }
 });
