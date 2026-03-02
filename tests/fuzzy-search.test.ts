@@ -29,8 +29,8 @@ describe('Fuzzy Search', () => {
 
     describe('Ingredient Fuzzy Search', () => {
 
-        test('should find "onion" when searching with a typo like "oinon"', async () => {
-            const response = await REQUEST.get('/api/ingredients?search=oinon');
+        test('should find "onion" when searching with a typo like "onin"', async () => {
+            const response = await REQUEST.get('/api/ingredients?search=onin');
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
@@ -39,7 +39,7 @@ describe('Fuzzy Search', () => {
             const names = response.body.map((i: any) => i.name);
             expect(names).toContain('onion');
         });
-
+        
         test('should find "garlic" when searching with a misspelling like "garlc"', async () => {
             const response = await REQUEST.get('/api/ingredients?search=garlc');
 

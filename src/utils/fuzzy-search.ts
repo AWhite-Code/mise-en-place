@@ -6,12 +6,10 @@ interface FuzzyMatch {
 }
 
 /**
- * Performs a fuzzy search on the name column of a given table using pg_trgm word_similarity.
- * Returns matching IDs ordered by relevance (highest similarity first).
- *
- * word_similarity(query, target) finds the greatest similarity between the query
- * and any substring of the target, making it ideal for matching search terms
- * against multi-word names (e.g. "pasta" matches "pasta carbonara" with high confidence).
+ * Hybrid fuzzy search: combines pg_trgm word_similarity with ILIKE substring matching.
+ * - Trigram catches typos and misspellings (e.g., "beff" → "Beef Chili")
+ * - ILIKE catches exact substrings that may score low on short words
+ * Results are ranked by similarity, with ILIKE-only matches given a baseline score.
  */
 export async function fuzzySearchByName(
     table: 'Recipe' | 'Ingredient',
@@ -19,9 +17,13 @@ export async function fuzzySearchByName(
     threshold: number = 0.3
 ): Promise<FuzzyMatch[]> {
     return prisma.$queryRawUnsafe<FuzzyMatch[]>(
-        `SELECT id, word_similarity($1, name) AS similarity
+        `SELECT id, 
+                GREATEST(word_similarity($1, name), 
+                         CASE WHEN name ILIKE '%' || $1 || '%' THEN 0.5 ELSE 0 END
+                ) AS similarity
          FROM "${table}"
          WHERE word_similarity($1, name) > $2
+            OR name ILIKE '%' || $1 || '%'
          ORDER BY similarity DESC`,
         searchTerm.toLowerCase(),
         threshold
