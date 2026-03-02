@@ -1,7 +1,7 @@
 import supertest from 'supertest';
 import { app, server } from '../src/server.js'; // Import app and server
 import { prisma } from '../prisma/client.js';
-import { resetWithBaseSeed } from '../prisma/utils/db-utils.js';
+import { resetWithBaseSeed, cleanDatabase } from '../prisma/utils/db-utils.js';
 import { execSync } from 'child_process';
 import dotenv from 'dotenv';
 
@@ -20,6 +20,10 @@ describe('Recipe API', () => {
         await resetWithBaseSeed();
     });
 
+    afterEach(async () => {
+    await cleanDatabase();
+    });
+
     afterAll(async () => {
         await prisma.$disconnect();
         server.close();
@@ -30,10 +34,10 @@ describe('Recipe API', () => {
             where: { name: 'Beef Chili' }
         });
 
-        const response = await request.get(`/api/recipes/${recipe?.id}`); // NOTE: This route doesn't exist yet!
+        const response = await request.get(`/api/recipes/${recipe?.id}`);
 
         expect(response.status).toBe(200);
-        expect(response.body.description).toContain('Beef Chili');
+        expect(response.body.name).toContain('Beef Chili');
     });
 
         test('GET /api/recipes should return all seeded recipes', async () => {

@@ -1,7 +1,7 @@
 import supertest from 'supertest';
 import { app, server } from '../src/server.js';
 import { prisma } from '../prisma/client.js';
-import { resetWithBaseSeed } from '../prisma/utils/db-utils.js';
+import { resetWithBaseSeed, cleanDatabase } from '../prisma/utils/db-utils.js';
 import { execSync } from 'child_process';
 import dotenv from 'dotenv';
 import { randomUUID } from 'crypto';
@@ -23,6 +23,10 @@ describe('Ingredient API', () => {
         await resetWithBaseSeed();
     });
 
+    afterEach(async () => {
+        await cleanDatabase();
+    })
+
     // Disconnect from the database after all tests are done
     afterAll(async () => {
         await prisma.$disconnect();
@@ -40,7 +44,7 @@ describe('Ingredient API', () => {
 
         test('GET /api/ingredients should return the first ingredient', async () =>{
             const Ingredient_ID = await prisma.ingredient.findFirst({
-                where: { name: 'Onion'}
+                where: { name: 'onion'}
             });
             const ONION_ID = Ingredient_ID?.id;
             const RESPONSE = await REQUEST.get(`/api/ingredients/${ONION_ID}`);
@@ -48,16 +52,16 @@ describe('Ingredient API', () => {
             expect(RESPONSE.status).toBe(200);
             expect(RESPONSE.body).toBeInstanceOf(Object);
             expect(RESPONSE.body.id).toBe(ONION_ID);
-            expect(RESPONSE.body.name).toBe('Onion');
+            expect(RESPONSE.body.name).toBe('onion');
         })
 
-        test('GET /api/ingredients?search=Garlic should return the "Garlic" ingredient', async () => {
-            const response = await REQUEST.get('/api/ingredients?search=Garlic');
+        test('GET /api/ingredients?search=garlic should return the "garlic" ingredient', async () => {
+            const response = await REQUEST.get('/api/ingredients?search=garlic');
         
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
             expect(response.body.length).toBe(1);
-            expect(response.body[0].name).toBe('Garlic');
+            expect(response.body[0].name).toBe('garlic');
         });
 
         // Failure Tests
@@ -101,7 +105,7 @@ describe('Ingredient API', () => {
     describe('PATCH Requests', () => {
         test('PATCH /api/ingredients/:id should update an ingredient name', async () => {
             const ingredientToUpdate = await prisma.ingredient.findFirst({
-                where: { name: 'Onion' },
+                where: { name: 'onion' },
             });
             const onionId = ingredientToUpdate?.id;
 
@@ -135,7 +139,7 @@ describe('Ingredient API', () => {
     describe('DELETE /api/ingredients/:id', () => {
         test('should delete an existing ingredient and return a 200 status', async () => {
             const ingredient = await prisma.ingredient.findFirst({
-                where: { name: 'Onion' },
+                where: { name: 'onion' },
             });
             const ingredientId = ingredient?.id;
 
