@@ -1,8 +1,13 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ============================================================================
+// Prisma Schema — mise-en-place
+// Phase 1: Foundation (Backend API)
+//
+// Core entities: Recipe, Ingredient, RecipeIngredient (join table).
+// - UUID primary keys for distributed / offline-first safety.
+// - Ingredient names are normalized (lowercase, trimmed) at the API layer.
+// - Cascade: deleting a Recipe removes its RecipeIngredient rows.
+// - Restrict: deleting an Ingredient fails if it is used in any recipe.
+// ============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -13,32 +18,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// A single recipe with optional metadata (times, servings, instructions).
 model Recipe {
-  id          String      @id @default(uuid())
-  name        String
-  description String?
-  servings    Int         @default(1)
-  prepTime    Int?
-  cookTime    Int?
-  instructions  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  servings     Int      @default(1)
+  prepTime     Int?
+  cookTime     Int?
+  instructions String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   recipeIngredients RecipeIngredient[]
 }
 
+/// Join table linking a Recipe to an Ingredient with quantity and unit.
 model RecipeIngredient {
-  id String               @id @default(uuid())
-  recipeId String
+  id           String @id @default(uuid())
+  recipeId     String
   ingredientId String
-  quantity Float          @default(0)
-  unit String
+  quantity     Float  @default(0)
+  unit         String
 
-  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
 }
 
+/// A unique ingredient. Names are stored normalised (lowercase, trimmed).
 model Ingredient {
-  id String               @id @default(uuid())
+  id   String @id @default(uuid())
   name String
+
   recipeIngredients RecipeIngredient[]
 }

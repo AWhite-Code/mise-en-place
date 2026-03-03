@@ -1,178 +1,153 @@
+/**
+ * @module tests/ingredient-api.test
+ * Integration tests for the Ingredient API endpoints.
+ *
+ * Covers GET (list, by-id, search), POST (create with normalisation,
+ * duplicate rejection), PATCH (rename), and DELETE (standalone,
+ * not-found, in-use restriction).
+ */
+
 import supertest from 'supertest';
+import { randomUUID } from 'crypto';
 import { app } from '../src/app.js';
 import { prisma } from '../prisma/client.js';
-import { resetWithBaseSeed, cleanDatabase } from '../prisma/utils/db-utils.js';
-import { execSync } from 'child_process';
-import { randomUUID } from 'crypto';
+import { setupTestLifecycle } from './helpers/test-lifecycle.js';
 
-const REQUEST = supertest(app);
+const request = supertest(app);
 
 describe('Ingredient API', () => {
+    setupTestLifecycle();
 
-    beforeAll(() => {
-        console.log('Test DATABASE_URL:', process.env.DATABASE_URL);
-        execSync('npx prisma migrate deploy', {
-            env: { ...process.env },
-        });
-    });
+    // ── GET ─────────────────────────────────────────────────────────────────
 
-    beforeEach(async () => {
-        await resetWithBaseSeed();
-    });
+    describe('GET /api/ingredients', () => {
+        test('should return all seeded ingredients', async () => {
+            const response = await request.get('/api/ingredients');
 
-    afterEach(async () => {
-        await cleanDatabase();
-    });
-
-    afterAll(async () => {
-        await prisma.$disconnect();
-    });
-    describe('GET Requests', () => {
-        test('GET /api/ingredients should return all seeded ingredients', async () => {
-            const RESPONSE = await REQUEST.get('/api/ingredients');
-            
-            expect(RESPONSE.status).toBe(200);
-            expect(RESPONSE.body).toBeInstanceOf(Array);
-            expect(RESPONSE.body.length).toBeGreaterThan(0);
-        });
-
-        test('GET /api/ingredients should return the first ingredient', async () =>{
-            const Ingredient_ID = await prisma.ingredient.findFirst({
-                where: { name: 'onion'}
-            });
-            const ONION_ID = Ingredient_ID?.id;
-            const RESPONSE = await REQUEST.get(`/api/ingredients/${ONION_ID}`);
-
-            expect(RESPONSE.status).toBe(200);
-            expect(RESPONSE.body).toBeInstanceOf(Object);
-            expect(RESPONSE.body.id).toBe(ONION_ID);
-            expect(RESPONSE.body.name).toBe('onion');
-        })
-
-        test('GET /api/ingredients?search=garlic should return the "garlic" ingredient', async () => {
-            const response = await REQUEST.get('/api/ingredients?search=garlic');
-        
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Array);
-            expect(response.body.length).toBe(1);
+            expect(response.body.length).toBeGreaterThan(0);
+        });
+
+        test('should return a single ingredient by ID', async () => {
+            const onion = await prisma.ingredient.findFirst({ where: { name: 'onion' } });
+
+            const response = await request.get(`/api/ingredients/${onion?.id}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.id).toBe(onion?.id);
+            expect(response.body.name).toBe('onion');
+        });
+
+        test('should return matching ingredients when using ?search=', async () => {
+            const response = await request.get('/api/ingredients?search=garlic');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveLength(1);
             expect(response.body[0].name).toBe('garlic');
         });
 
-        // Failure Test
-        test('GET /api/ingredients/:id should return 404 for a non-existent ID', async () => {
-            const fakeId = randomUUID();
-            const response = await REQUEST.get(`/api/ingredients/${fakeId}`);
+        test('should return 404 for a non-existent ID', async () => {
+            const response = await request.get(`/api/ingredients/${randomUUID()}`);
+
             expect(response.status).toBe(404);
         });
 
-        test('GET /api/ingredients?search=... should return an empty array for no matches', async () => {
-        const response = await REQUEST.get('/api/ingredients?search=nonexistentingredient');
+        test('should return an empty array when search has no matches', async () => {
+            const response = await request.get('/api/ingredients?search=nonexistentingredient');
 
-        expect(response.status).toBe(200);
-        expect(response.body).toBeInstanceOf(Array);
-        expect(response.body.length).toBe(0);
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual([]);
         });
     });
 
-    describe('POST Requests', () => {
-        test('should create a new ingredient and return it with status 201', async () => {
-            const newIngredient = {
-                name: 'Potato', // Note when altering tests make sure it is capitalised to test if API is normalising the inputs
-            };
+    // ── POST ────────────────────────────────────────────────────────────────
 
-            const response = await REQUEST.post('/api/ingredients').send(newIngredient);
+    describe('POST /api/ingredients', () => {
+        test('should create a new ingredient with a normalised name', async () => {
+            const response = await request.post('/api/ingredients').send({ name: 'Potato' });
 
             expect(response.status).toBe(201);
             expect(response.body.id).toBeDefined();
-            expect(response.body.name).toBe('potato');  // Output should always be all lower case
+            expect(response.body.name).toBe('potato'); // Normalised to lowercase
         });
 
-        // Failure Tests
-        test('should return status 400 if name is missing', async () => {
-            const response = await REQUEST.post('/api/ingredients').send({}); // Send an empty body
+        test('should return 400 when name is missing', async () => {
+            const response = await request.post('/api/ingredients').send({});
 
             expect(response.status).toBe(400);
         });
 
-        test('should return 409 if an ingredient with the same name already exists', async () => {
-            const response = await REQUEST.post('/api/ingredients').send({ name: 'Onion' });
+        test('should return 409 when a duplicate name exists', async () => {
+            const response = await request.post('/api/ingredients').send({ name: 'Onion' });
 
             expect(response.status).toBe(409);
             expect(response.body.error).toContain('already exists');
         });
     });
 
+    // ── PATCH ───────────────────────────────────────────────────────────────
 
-    describe('PATCH Requests', () => {
-        test('PATCH /api/ingredients/:id should update an ingredient name', async () => {
-            const ingredientToUpdate = await prisma.ingredient.findFirst({
-                where: { name: 'onion' },
-            });
-            const onionId = ingredientToUpdate?.id;
+    describe('PATCH /api/ingredients/:id', () => {
+        test('should update an ingredient name', async () => {
+            const onion = await prisma.ingredient.findFirst({ where: { name: 'onion' } });
 
-            const updatedData = { name: 'yellow onion' };
-
-            const response = await REQUEST.patch(`/api/ingredients/${onionId}`).send(updatedData);
+            const response = await request
+                .patch(`/api/ingredients/${onion?.id}`)
+                .send({ name: 'yellow onion' });
 
             expect(response.status).toBe(200);
             expect(response.body.name).toBe('yellow onion');
-            expect(response.body.id).toBe(onionId);
+            expect(response.body.id).toBe(onion?.id);
         });
 
-        // Failure Tests
-        test('should return 404 if the ingredient to update does not exist', async () => {
-            const fakeId = randomUUID();
-            const response = await REQUEST.patch(`/api/ingredients/${fakeId}`).send({ name: 'new name' });
+        test('should return 404 for a non-existent ingredient', async () => {
+            const response = await request
+                .patch(`/api/ingredients/${randomUUID()}`)
+                .send({ name: 'new name' });
 
             expect(response.status).toBe(404);
         });
 
-        test('should return 400 if the new name is invalid', async () => {
-            const ingredient = await prisma.ingredient.findFirst({ where: { name: 'onion' } });
-            const ingredientId = ingredient?.id;
-            
-            const response = await REQUEST.patch(`/api/ingredients/${ingredientId}`).send({ name: '' });
+        test('should return 400 for an empty name', async () => {
+            const onion = await prisma.ingredient.findFirst({ where: { name: 'onion' } });
+
+            const response = await request
+                .patch(`/api/ingredients/${onion?.id}`)
+                .send({ name: '' });
 
             expect(response.status).toBe(400);
         });
     });
 
+    // ── DELETE ───────────────────────────────────────────────────────────────
+
     describe('DELETE /api/ingredients/:id', () => {
-        test('should delete an existing ingredient and return a 200 status', async () => {
-            // Create an ingredient that isn't used in any recipe
+        test('should delete a standalone ingredient', async () => {
             const standalone = await prisma.ingredient.create({
                 data: { name: 'standalone test ingredient' },
             });
 
-            const response = await REQUEST.delete(`/api/ingredients/${standalone.id}`);
+            const response = await request.delete(`/api/ingredients/${standalone.id}`);
 
             expect(response.status).toBe(200);
 
-            const deletedIngredient = await prisma.ingredient.findUnique({
-                where: { id: standalone.id },
-            });
-            expect(deletedIngredient).toBeNull();
+            const deleted = await prisma.ingredient.findUnique({ where: { id: standalone.id } });
+            expect(deleted).toBeNull();
         });
 
-        test('should return a 404 status if the ingredient does not exist', async () => {
-            const fakeId = randomUUID();
-
-            const response = await REQUEST.delete(`/api/ingredients/${fakeId}`);
+        test('should return 404 for a non-existent ingredient', async () => {
+            const response = await request.delete(`/api/ingredients/${randomUUID()}`);
 
             expect(response.status).toBe(404);
         });
 
-        test('should return 409 when deleting an ingredient that is used in a recipe', async () => {
-            // Find an ingredient that is linked to the Beef Chili recipe
-            const ingredient = await prisma.ingredient.findFirst({
-                where: {
-                    recipeIngredients: {
-                        some: {},
-                    },
-                },
+        test('should return 409 when deleting an ingredient used in a recipe', async () => {
+            const inUse = await prisma.ingredient.findFirst({
+                where: { recipeIngredients: { some: {} } },
             });
 
-            const response = await REQUEST.delete(`/api/ingredients/${ingredient?.id}`);
+            const response = await request.delete(`/api/ingredients/${inUse?.id}`);
 
             expect(response.status).toBe(409);
             expect(response.body.error).toContain('used in recipes');

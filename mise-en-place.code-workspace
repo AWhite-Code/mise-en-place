@@ -13,7 +13,7 @@
             ".git",
             "mise-en-place.code-workspace",
             "package-lock.json"
-        ],  
+        ]
     },
     "extensions": {
         "recommendations": [

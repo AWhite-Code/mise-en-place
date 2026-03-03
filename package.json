@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
+  "description": "Personal recipe management API — Phase 1 (Foundation)",
   "prisma": {
     "seed": "node --loader ts-node/esm prisma/seeds/base-seed.ts"
   },
@@ -22,7 +23,6 @@
     "url": "https://github.com/AWhite-Code/mise-en-place/issues"
   },
   "homepage": "https://github.com/AWhite-Code/mise-en-place#readme",
-  "description": "",
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/jest": "^29.5.14",

@@ -1,10 +1,30 @@
+/**
+ * @module src/routes/ingredients
+ * CRUD endpoints for the Ingredient resource.
+ *
+ * Ingredient names are normalised on write (lowercased and trimmed)
+ * to ensure consistent matching. Duplicate detection uses the
+ * normalised form. Deleting an ingredient that is referenced by
+ * any RecipeIngredient is blocked (HTTP 409).
+ */
+
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../../prisma/client.js';
 import { isPrismaError } from '../utils/prisma-errors.js';
 import { fuzzySearchByName } from '../utils/fuzzy-search.js';
+import { validateRequiredString } from '../utils/validation.js';
+
 const router = Router();
 
-// GET all ingredients
+// ── GET /api/ingredients ────────────────────────────────────────────────────
+/**
+ * List all ingredients, optionally filtered by a fuzzy search term.
+ *
+ * Query params:
+ *  - `search` (string, optional): fuzzy-match against ingredient names.
+ *
+ * @returns 200 with an array of Ingredient objects (may be empty).
+ */
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { search } = req.query;
@@ -17,17 +37,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
                 return;
             }
 
-            const ids = matches.map(m => m.id);
-
+            const ids = matches.map((m) => m.id);
             const ingredients = await prisma.ingredient.findMany({
                 where: { id: { in: ids } },
             });
 
             // Preserve similarity ranking from the fuzzy search
-            const sorted = ids
-                .map(id => ingredients.find(i => i.id === id))
-                .filter(Boolean);
-
+            const sorted = ids.map((id) => ingredients.find((i) => i.id === id)).filter(Boolean);
             res.status(200).json(sorted);
             return;
         }
@@ -39,18 +55,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-// GET an ingredient by its Unique ID
+// ── GET /api/ingredients/:id ────────────────────────────────────────────────
+/**
+ * Retrieve a single ingredient by UUID.
+ *
+ * @returns 200 with the Ingredient, or 404 if not found.
+ */
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-
-        const { id } = req.params;
-
         const ingredient = await prisma.ingredient.findUnique({
-            where: { id: id }
+            where: { id: req.params.id },
         });
 
         if (!ingredient) {
-            res.status(404).json({ error: 'Ingredient not found' });
+            res.status(404).json({ error: 'Ingredient not found.' });
             return;
         }
 
@@ -60,78 +78,84 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     }
 });
 
-// POST Ingredient
+// ── POST /api/ingredients ───────────────────────────────────────────────────
+/**
+ * Create a new ingredient. The name is normalised (lowercased, trimmed).
+ * Duplicate names are rejected with 409.
+ *
+ * @returns 201 with the created Ingredient, or 400/409 on validation failure.
+ */
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name } = req.body;
+        const name = validateRequiredString(req.body.name, 'Ingredient name', res);
+        if (name === null) return;
 
-        if (!name || typeof name !== 'string' || name.trim().length === 0) {
-            res.status(400).json({ error: 'Ingredient name must be a non-empty string.' });
-            return;
-        }
+        const normalised = name.toLowerCase();
 
-        const normalizedName = name.toLowerCase().trim();
-
-        // Check for existing ingredient with the same normalized name
         const existing = await prisma.ingredient.findFirst({
-            where: { name: normalizedName },
+            where: { name: normalised },
         });
 
         if (existing) {
-            res.status(409).json({ error: `Ingredient "${normalizedName}" already exists.` });
+            res.status(409).json({ error: `Ingredient "${normalised}" already exists.` });
             return;
         }
 
-        const createdIngredient = await prisma.ingredient.create({
-            data: { name: normalizedName },
+        const ingredient = await prisma.ingredient.create({
+            data: { name: normalised },
         });
 
-        res.status(201).json(createdIngredient);
+        res.status(201).json(ingredient);
     } catch (error) {
         next(error);
     }
 });
 
-// PATCH Ingredient
-router.patch('/:id', async (req, res, next) => {
+// ── PATCH /api/ingredients/:id ──────────────────────────────────────────────
+/**
+ * Update an ingredient's name. The new name is normalised.
+ *
+ * @returns 200 with the updated Ingredient, or 400/404 on failure.
+ */
+router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
-        const { name } = req.body;
+        const name = validateRequiredString(req.body.name, 'Ingredient name', res);
+        if (name === null) return;
 
-        if (!name || typeof name !== 'string' || name.trim().length === 0) {
-            res.status(400).json({ error: 'Ingredient name must be a non-empty string.' });
-            return;
-        }
-
-        const updatedIngredient = await prisma.ingredient.update({
-            where: { id },
-            data: {
-                name: name.toLowerCase().trim(),
-            },
+        const ingredient = await prisma.ingredient.update({
+            where: { id: req.params.id },
+            data: { name: name.toLowerCase() },
         });
 
-        res.status(200).json(updatedIngredient);
+        res.status(200).json(ingredient);
     } catch (error) {
         if (isPrismaError(error, 'P2025')) {
-            res.status(404).json({ error: 'Ingredient not found' });
+            res.status(404).json({ error: 'Ingredient not found.' });
         } else {
             next(error);
         }
     }
 });
 
-router.delete('/:id', async (req, res, next) => {
+// ── DELETE /api/ingredients/:id ─────────────────────────────────────────────
+/**
+ * Delete an ingredient by UUID.
+ *
+ * Fails with 409 if the ingredient is still referenced by any recipe
+ * (Prisma `onDelete: Restrict` on RecipeIngredient).
+ *
+ * @returns 200 on success, 404 if not found, 409 if in use.
+ */
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
-
         await prisma.ingredient.delete({
-            where: { id },
+            where: { id: req.params.id },
         });
 
-        res.status(200).json({ message: 'Ingredient deleted successfully' });
+        res.status(200).json({ message: 'Ingredient deleted successfully.' });
     } catch (error) {
         if (isPrismaError(error, 'P2025')) {
-            res.status(404).json({ error: 'Ingredient not found' });
+            res.status(404).json({ error: 'Ingredient not found.' });
         } else if (isPrismaError(error, 'P2003')) {
             res.status(409).json({ error: 'Cannot delete ingredient that is used in recipes.' });
         } else {

@@ -1,4 +1,7 @@
-# docker-compose.yml
+# docker-compose.yml — mise-en-place
+# Provides the PostgreSQL 15 instance for local development.
+# Start with: docker-compose up -d
+
 version: '3.8'
 services:
   db:

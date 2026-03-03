@@ -1,3 +1,4 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
     preset: 'ts-jest/presets/js-with-ts-esm',
     testEnvironment: 'node',
@@ -8,9 +9,7 @@ export default {
     transform: {
         '^.+\\.tsx?$': [
             'ts-jest',
-            {
-                useESM: true,
-            },
+            { useESM: true },
         ],
     },
 };
